@@ -7,189 +7,122 @@
 #include <set>
 using namespace std;
 
-int
-main (int argc, char *argv[])
-{
+int main(int argc, char *argv[]){
 
-  string line;
-  ifstream myfile (argv[1]);
-  char mapArr[50][80];
-  int label[50][80];
+	string line;
+	ifstream myfile(argv[1]);
+	char mapArr[50][80];
+	int label[50][80];
 
-  if (myfile.is_open ())
-    {
-      int lineNum = 0;
-      while (getline (myfile, line))
-	{
-	  int charNum = 0;
-	for (char c:line)
-	    {
-	      if (c != '.')
-		{
-		  mapArr[lineNum][charNum] = 'x';
+	if (myfile.is_open()){
+		int lineNum = 0;
+		while (getline(myfile, line)){
+	  		int charNum = 0;
+			for (char c : line){
+	      		if (c != '.'){
+		  			mapArr[lineNum][charNum] = 'x';
+				} else {
+		  			mapArr[lineNum][charNum] = c;
+				}
+	      		charNum++;
+	    	}
+	  		lineNum++;
 		}
-	      else
-		{
-		  mapArr[lineNum][charNum] = c;
-		}
-	      charNum++;
-	    }
-	  lineNum++;
+      	myfile.close();
+      	cout << "Map matrix constructed..." << endl;
+	} else {
+    	cout << "Unable to open file";
 	}
-      myfile.close ();
-      cout << "Map matrix constructed..." << endl;
-    }
 
-  else
-    cout << "Unable to open file";
-
-  int newLabel = 1;
-  //std::vector<pair<int,int>> equ; //equivalences
-  map < int, int >equ;
+  	int newLabel = 1;
+  	map<int,int> equ; //equivalences
 
 
-  for (int i = 0; i < 50; i++)
-    {
-      for (int j = 0; j < 80; j++)
-	{
-	  if (mapArr[i][j] != '.')
-	    {
+  	for (int i = 0; i < 50; i++){
+      	for (int j = 0; j < 80; j++){
+	  		if (mapArr[i][j] != '.'){
+			
+				vector<int> neighbours;
+				
+				if (i == 0 && j == 0){
+					label[i][j] = newLabel;
+					newLabel++;
+				} else {
+					if (i == 0){
+		      			if (mapArr[i][j - 1] != '.' && label[i][j - 1] != 0){
+			  				neighbours.push_back(label[i][j - 1]);
+						}
+					} else if (j == 0) {
+						if (mapArr[i - 1][j] != '.' && label[i - 1][j] != 0){
+    			  			neighbours.push_back(label[i - 1][j]);
+						}
+		      			if (mapArr[i - 1][j + 1] != '.' && label[i - 1][j + 1] != 0){
+    			  			neighbours.push_back(label[i - 1][j + 1]);
+    					}
+					} else {
+		      			if (mapArr[i - 1][j - 1] != '.' && label[i - 1][j - 1] != 0) {
+    			  			neighbours.push_back(label[i - 1][j - 1]);
+    					}
+		      			if (mapArr[i - 1][j] != '.' && label[i - 1][j] != 0) {
+    			  			neighbours.push_back(label[i - 1][j]);
+    					}
+		      			if (mapArr[i - 1][j + 1] != '.' && label[i - 1][j + 1] != 0) {
+    			  			neighbours.push_back(label[i - 1][j + 1]);
+    					}
+		      			if (mapArr[i][j - 1] != '.' && label[i][j - 1] != 0) {
+    			  			neighbours.push_back(label[i][j - 1]);
+    					}
+					}
 
-	      vector < int >neighbours;
+		  			if (neighbours.size() != 0) {
 
-	      if (i == 0 && j == 0)
-		{
+		      			sort (neighbours.begin(), neighbours.end());
 
-		  label[i][j] = newLabel;
-		  newLabel++;
+		      			label[i][j] = neighbours.at(0);
 
+		      			for (int k = 1; k < neighbours.size(); k++) {
+			  				if (equ.count(k)) {
+			      				//the key has been found
+			      				int prev = equ.at(k);
+			      				equ.erase(k);
+			      				if (prev > neighbours.at(0)) {
+    				  				equ.insert(std::pair<int, int>(k, neighbours.at(0)));
+    				  				equ.insert(std::pair<int, int>(prev, neighbours.at(0)));
+    							} else {
+    				  				equ.insert(std::pair<int, int>(k, prev));
+    				  				equ.insert(std::pair<int, int>(neighbours.at(0), prev));
+    							}
+							} else {
+			      				//the key has not been found
+			      				equ.insert(std::pair<int, int>(k, neighbours.at(0)));
+			    			}
+						}
+		    		} else {
+		      			label[i][j] = newLabel;
+		      			newLabel++;
+		    		}
+				}
+	    	}
 		}
-	      else
-		{
+    }
 
-		  if (i == 0)
-		    {
+	set<int> islands;
 
-		      if (mapArr[i][j - 1] != '.' && label[i][j - 1] != 0)
-			{
-			  neighbours.push_back (label[i][j - 1]);
-			}
-
-		    }
-		  else if (j == 0)
-		    {
-
-		      if (mapArr[i - 1][j] != '.' && label[i - 1][j] != 0)
-    			{
-    			  neighbours.push_back (label[i - 1][j]);
+  	for (int i = 0; i < 50; i++) {
+      	for (int j = 0; j < 80; j++) {
+	  		if (label[i][j] != 0) {
+	      		int k = label[i][j];
+	      		//merge all the labels
+	      		//if label is in map, change the label to it's mapping
+	      		if (equ.count(k)) {
+    		  		label[i][j] = equ.at(k);
     			}
-		      if (mapArr[i - 1][j + 1] != '.'
-			  && label[i - 1][j + 1] != 0)
-    			{
-    			  neighbours.push_back (label[i - 1][j + 1]);
-    			}
-
-		    }
-		  else
-		    {
-		      if (mapArr[i - 1][j - 1] != '.'
-			  && label[i - 1][j - 1] != 0)
-    			{
-    			  neighbours.push_back (label[i - 1][j - 1]);
-    			}
-		      if (mapArr[i - 1][j] != '.' && label[i - 1][j] != 0)
-    			{
-    			  neighbours.push_back (label[i - 1][j]);
-    			}
-		      if (mapArr[i - 1][j + 1] != '.'
-			  && label[i - 1][j + 1] != 0)
-    			{
-    			  neighbours.push_back (label[i - 1][j + 1]);
-    			}
-		      if (mapArr[i][j - 1] != '.' && label[i][j - 1] != 0)
-    			{
-    			  neighbours.push_back (label[i][j - 1]);
-    			}
-		    }
-
-		  if (neighbours.size () != 0)
-		    {
-
-		      sort (neighbours.begin (), neighbours.end ());
-
-		      label[i][j] = neighbours.at (0);
-
-		      for (int k = 1; k < neighbours.size (); k++)
-			{
-			  if (equ.count (k))
-			    {
-			      //the key has been found
-			      int prev = equ.at (k);
-			      equ.erase (k);
-			      if (prev > neighbours.at (0))
-    				{
-    				  equ.insert (std::pair < int,
-    					      int >(k, neighbours.at (0)));
-    				  equ.insert (std::pair < int,
-    					      int >(prev, neighbours.at (0)));
-    				}
-			      else
-    				{
-    				  equ.insert (std::pair < int,
-    					      int >(k, prev));
-    				  equ.insert (std::pair < int,
-    					      int >(neighbours.at (0), prev));
-    				}
-
-			    }
-			  else
-			    {
-			      //the key has not been found
-			      equ.insert (std::pair < int,
-					  int >(k, neighbours.at (0)));
-			    }
-
-			}
-
-		    }
-		  else
-		    {
-
-		      label[i][j] = newLabel;
-		      newLabel++;
-
-		    }
-
+	      		islands.insert(label[i][j]);
+	    	}
 		}
-
-	    }
 	}
-    }
 
-  set <int> islands;
+	cout << islands.at(islands.size()-1) << endl;
 
-  for (int i = 0; i < 50; i++)
-    {
-      for (int j = 0; j < 80; j++)
-	{
-	  if (label[i][j] != 0)
-	    {
-	      int k = label[i][j];
-	      //merge all the labels
-	      //if label is in map, change the label to it's mapping
-	      if (equ.count (k))
-    		{
-    		  label[i][j] = equ.at (k);
-    		}
-	      islands.insert (label[i][j]);
-	    }
-	}
-    }
-
-for (int elem : islands)
-    {
-      cout << elem << endl;
-    }
-
-  return 0;
+	return 0;
 }
